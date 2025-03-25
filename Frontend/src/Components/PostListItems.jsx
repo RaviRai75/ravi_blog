@@ -1,34 +1,36 @@
 import React from 'react'
 import Image from './Image'
 import { Link } from 'react-router-dom'
+import {format} from "timeago.js"
 
-const PostListItems = () => {
+
+const PostListItems = ({ post }) => {
   return (
-      <div className='flex flex-col xl:flex-row gap-8'>
-          {/* imagee */}
-          <div className='md:hidden xl:block xl:w-1/3 w="738'>
-              <Image src="default-image.jpg" alt="" className='rounded-2xl object-cover'/>
-          </div>
-
-          {/* detailss */}
-
-          <div className='flex flex-col gap-4 xl:w-2/3'>
-              <Link to='./test' className='text-4xl font-semibold'>
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit. Minima, iusto?
-              </Link>
-              <div className='flex items-center gap-2 text-gray-400 text-sm'>
-                  <span>Written By</span>
-                  <Link className='text-green-500'>Ravi Roy</Link>
-                  <span>On</span>
-                  <Link className='text-green-500'>Web Design</Link>
-                  <span>3 days ago</span>
-                  
-              </div>
-              <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Impedit mollitia, possimus in tempora minima repellendus facere minus illo nisi sit provident soluta dignissimos amet sint cupiditate tempore molestiae. Ipsa, ullam.</p>
-              <Link to='./test' className='text-green-600 underline text-sm'>Read More</Link>
-          </div>
-      
+    <div className="flex flex-col xl:flex-row gap-8 mb-12">
+    {/* image */}
+    {post.img && (
+      <div className="md:hidden xl:block xl:w-1/3">
+        <Image src={post.img} className="rounded-2xl object-cover" w="735" />
+      </div>
+    )}
+    {/* details */}
+    <div className="flex flex-col gap-4 xl:w-2/3">
+      <Link to={`/${post.slug}`} className="text-4xl font-semibold">
+        {post.title}
+      </Link>
+      <div className="flex items-center gap-2 text-gray-400 text-sm">
+        <span>Written by</span>
+        <Link className="text-green-500" to={`/posts?author=${post.user.username}`}>{post.user.username}</Link>
+        <span>on</span>
+        <Link className="text-green-500">{post.category}</Link>
+        <span>{format(post.createdAt)}</span>
+      </div>
+      <p>{post.desc}</p>
+      <Link to={`/${post.slug}`} className="underline text-green-600 text-sm">
+        Read More
+      </Link>
     </div>
+  </div>
   )
 }
 

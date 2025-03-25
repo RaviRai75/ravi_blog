@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from './Image'
 import { Link } from 'react-router-dom'
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+import { SignedIn, SignedOut,  UserButton } from '@clerk/clerk-react'
 
 
 
@@ -28,27 +28,47 @@ const Navbar = () => {
         {/* Mobile Button */}
 
         <div className='cursor-pointer text-4xl'  onClick={()=>setOpen((prev) => !prev)}>
-          {open ? "X"  : "☰"}
+          {/* {open ? "X"  : "☰"} */}
+          <div className="flex flex-col gap-[5.4px]">
+            <div
+              className={`h-[3px] rounded-md w-6 bg-black origin-left transition-all ease-in-out ${
+                open && "rotate-45"
+              }`}
+            ></div>
+            <div
+              className={`h-[3px] rounded-md w-6 bg-black transition-all ease-in-out ${
+                open && "opacity-0"
+              }`}
+            ></div>
+            <div
+              className={`h-[3px] rounded-md w-6 bg-black origin-left transition-all ease-in-out ${
+                open && "-rotate-45"
+              }`}
+            ></div>
+          </div>
         </div>
-
-        {/* Mobile Link List */}
-
-        <div className={`w-full h-screen flex flex-col items-center justify-center gap-8 absolute top-16 right-0 font-medium text-lg bg-red-100 transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}>
-        <Link to="/">HOME</Link>
-        <Link to="/">Trending</Link>
-        <Link to="/">Most Popular</Link>
-        <Link to="/">About</Link>
-        <Link to="/">
-        <button className='py-2 px-4 rounded-3xl bg-green-400 text-white cursor-pointer'>Login 👋</button></Link>
-
+        {/* MOBILE LINK LIST */}
+        <div
+          className={`w-full h-screen bg-[#e6e6ff] flex flex-col items-center justify-center gap-8 font-medium text-lg absolute top-16 transition-all ease-in-out ${
+            open ? "-right-0" : "-right-[100%]"
+          }`}
+        >
+          <Link to="/" onClick={()=>setOpen(false)}>Home</Link>
+          <Link to="/posts?sort=trending" onClick={()=>setOpen(false)}>Trending</Link>
+          <Link to="/posts?sort=popular" onClick={()=>setOpen(false)}>Most Popular</Link>
+          <Link to="/" onClick={()=>setOpen(false)}>About</Link>
+          <Link to="/login" onClick={()=>setOpen(false)}>
+            <button className="py-2 px-4 rounded-3xl bg-blue-800 text-white">
+              Login 👋
+            </button>
+          </Link>
         </div>
       </div>
-
-      {/* DeskTop Menu */}
-      <div className='hidden md:flex items-center gap-8 xl:gap-12 font-medium cursor-pointer' >
-        <Link to="/">HOME</Link>
-        <Link to="/">Trending</Link>
-        <Link to="/">Most Popular</Link>
+      {/* DESKTOP MENU */}
+      <div className="hidden md:flex items-center gap-8 xl:gap-12 font-medium">
+        <Link to="/">Home</Link>
+        <Link to="/posts?sort=trending">Trending</Link>
+        <Link to="/posts?sort=popular">Most Popular</Link>
         <Link to="/">About</Link>
           <SignedOut>
           <Link to="/login"><button className='py-2 px-4 rounded-3xl bg-green-400 text-white cursor-pointer'>Login 👋</button></Link>
