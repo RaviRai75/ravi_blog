@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import Image from './Image'
 import { Link } from 'react-router-dom'
-import { SignedIn, SignedOut,  UserButton } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react'
+
 
 
 
@@ -49,10 +50,10 @@ const Navbar = () => {
         </div>
         {/* MOBILE LINK LIST */}
         <div
-          className={`w-full h-screen bg-[#e6e6ff] flex flex-col items-center justify-center gap-8 font-medium text-lg absolute top-16 transition-all ease-in-out ${
-            open ? "-right-0" : "-right-[100%]"
-          }`}
-        >
+  className={`w-full h-screen bg-[#e6e6ff] flex flex-col items-center justify-center gap-8 font-medium text-lg absolute top-16 transition-all ease-in-out ${
+    open ? "left-0" : "-left-full"
+  }`}
+>
           <Link to="/" onClick={()=>setOpen(false)}>Home</Link>
           <Link to="/posts?sort=trending" onClick={()=>setOpen(false)}>Trending</Link>
           <Link to="/posts?sort=popular" onClick={()=>setOpen(false)}>Most Popular</Link>
