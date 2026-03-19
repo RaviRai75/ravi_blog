@@ -1,9 +1,15 @@
-import express from "express"
-import { addComment, deleteComment, getPostComments } from "../controllers/comment.controller.js"
-const router = express.Router()
+import express from "express";
+import {
+  addComment,
+  deleteComment,
+  getPostComments,
+} from "../controllers/comment.controller.js";
+import { requireAuth } from "@clerk/express";
 
-router.get("/:postId", getPostComments)
-router.post("/:postId", addComment)
-router.delete("/:id", deleteComment)
+const router = express.Router();
 
-export default router
+router.get("/:postId", getPostComments);
+router.post("/:postId", requireAuth(), addComment);
+router.delete("/:id", requireAuth(), deleteComment);
+
+export default router;
