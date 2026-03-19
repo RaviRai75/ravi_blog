@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import "react-quill-new/dist/quill.snow.css";
 import ReactQuill from "react-quill-new";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import Upload from "../Components/Upload";
 
@@ -17,72 +17,109 @@ const CATEGORIES = [
   { value: "marketing", label: "Marketing", emoji: "📣" },
 ];
 
-const Write = () => {
+const EditPost = () => {
+  const { slug } = useParams();
   const { isLoaded, isSignedIn } = useUser();
-  const [value, setValue] = useState("");
-  const [cover, setCover] = useState("");
+  const { getToken } = useAuth();
+  const navigate = useNavigate();
+
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [content, setContent] = useState("");
+  const [cover, setCover] = useState(null);
   const [img, setImg] = useState("");
   const [video, setVideo] = useState("");
   const [progress, setProgress] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("general");
-  const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const [postId, setPostId] = useState(null);
+
+  // fetch existing post
+  const { isPending: loadingPost, error } = useQuery({
+    queryKey: ["post", slug],
+    queryFn: async () => {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/posts/${slug}`,
+      );
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setTitle(data.title);
+      setDesc(data.desc);
+      setContent(data.content);
+      setSelectedCategory(data.category);
+      setPostId(data._id);
+      if (data.img) setCover({ filePath: data.img, existing: true });
+    },
+  });
+
+  // also handle via useEffect since onSuccess is deprecated in v5
+  const { data: postData } = useQuery({
+    queryKey: ["post", slug],
+    queryFn: async () => {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/posts/${slug}`,
+      );
+      return res.data;
+    },
+  });
 
   useEffect(() => {
-    img && setValue((prev) => prev + `<p><img src="${img.url}"/></p>`);
+    if (postData) {
+      setTitle(postData.title);
+      setDesc(postData.desc);
+      setContent(postData.content);
+      setSelectedCategory(postData.category);
+      setPostId(postData._id);
+      if (postData.img) setCover({ filePath: postData.img, existing: true });
+    }
+  }, [postData]);
+
+  useEffect(() => {
+    img && setContent((prev) => prev + `<p><img src="${img.url}"/></p>`);
   }, [img]);
 
   useEffect(() => {
     video &&
-      setValue(
+      setContent(
         (prev) => prev + `<p><iframe class="ql-video" src="${video.url}"/></p>`,
       );
   }, [video]);
 
   const mutation = useMutation({
-    mutationFn: async (newPost) => {
+    mutationFn: async (updatedPost) => {
       const token = await getToken();
-      return axios.post(`${import.meta.env.VITE_API_URL}/posts`, newPost, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      return axios.put(
+        `${import.meta.env.VITE_API_URL}/posts/${postId}`,
+        updatedPost,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
     },
     onSuccess: (res) => {
-      toast.success("Post published successfully!");
+      toast.success("Post updated successfully!");
       navigate(`/${res.data.slug}`);
     },
     onError: () => {
-      toast.error("Failed to publish. Please try again.");
+      toast.error("Failed to update post.");
     },
   });
 
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">Loading editor...</p>
-        </div>
+        <div className="w-10 h-10 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (isLoaded && !isSignedIn) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5">
-        <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center text-4xl">
-          ✍️
-        </div>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Sign in to write
-          </h2>
-          <p className="text-gray-500">
-            You need an account to create and publish posts.
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="text-gray-500">You need to be signed in to edit posts.</p>
         <Link
           to="/sign-in"
-          className="px-8 py-3 bg-purple-500 text-white rounded-2xl font-semibold hover:bg-purple-600 transition-colors shadow-md"
+          className="px-6 py-2 bg-purple-500 text-white rounded-xl"
         >
           Sign In
         </Link>
@@ -90,47 +127,65 @@ const Write = () => {
     );
   }
 
+  if (loadingPost || !postData) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading post...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error)
+    return <p className="text-center text-red-400 mt-20">Post not found.</p>;
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
     mutation.mutate({
-      img: cover.filePath || "",
-      title: formData.get("title"),
+      img: cover?.existing ? cover.filePath : cover?.filePath || "",
+      title,
       category: selectedCategory,
-      desc: formData.get("desc"),
-      content: value,
+      desc,
+      content,
     });
   };
 
   const isUploading = progress > 0 && progress < 100;
-  const charCount = value.replace(/<[^>]*>/g, "").length;
+  const charCount = content.replace(/<[^>]*>/g, "").length;
+  const coverUrl = cover?.existing
+    ? `${import.meta.env.VITE_IK_URL_ENDPOINT}${cover.filePath}`
+    : cover?.filePath
+      ? `${import.meta.env.VITE_IK_URL_ENDPOINT}${cover.filePath}`
+      : null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
-            New Post
+            Edit Post
           </h1>
           <p className="text-gray-400 text-sm mt-1">
-            Write something amazing ✨
+            Update your post content ✏️
           </p>
         </div>
         <Link
-          to="/"
+          to={`/${slug}`}
           className="text-sm text-gray-400 hover:text-purple-500 transition-colors"
         >
-          ← Back to Home
+          ← Back to Post
         </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Cover image */}
         <div className="rounded-3xl overflow-hidden shadow-sm border border-purple-100 bg-white">
-          {cover ? (
+          {coverUrl ? (
             <div className="relative group h-64">
               <img
-                src={`${import.meta.env.VITE_IK_URL_ENDPOINT}${cover.filePath}`}
+                src={coverUrl}
                 alt="Cover"
                 className="w-full h-full object-cover"
               />
@@ -155,7 +210,7 @@ const Write = () => {
           ) : (
             <Upload type="image" setProgress={setProgress} setData={setCover}>
               <div className="flex flex-col items-center justify-center py-14 cursor-pointer hover:bg-purple-50/60 transition-colors group">
-                <div className="w-16 h-16 rounded-2xl bg-purple-100 group-hover:bg-purple-200 transition-colors flex items-center justify-center mb-4 shadow-sm">
+                <div className="w-16 h-16 rounded-2xl bg-purple-100 group-hover:bg-purple-200 transition-colors flex items-center justify-center mb-4">
                   <svg
                     className="w-8 h-8 text-purple-500"
                     fill="none"
@@ -200,8 +255,9 @@ const Write = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-5">
           <input
             type="text"
-            name="title"
             required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder="Your post title..."
             className="w-full text-3xl font-extrabold bg-transparent outline-none text-gray-800 placeholder-gray-200 tracking-tight"
           />
@@ -237,9 +293,10 @@ const Write = () => {
             Short Description
           </label>
           <textarea
-            name="desc"
             required
-            placeholder="Write a short summary that hooks the reader..."
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Write a short summary..."
             rows={3}
             className="w-full bg-transparent outline-none text-gray-700 placeholder-gray-300 resize-none text-sm leading-relaxed"
           />
@@ -279,21 +336,21 @@ const Write = () => {
               <ReactQuill
                 theme="snow"
                 className="flex-1 min-h-[280px]"
-                value={value}
-                onChange={setValue}
+                value={content}
+                onChange={setContent}
                 readOnly={isUploading}
               />
             </div>
           </div>
         </div>
 
-        {/* Footer / submit */}
+        {/* Footer */}
         <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4">
           <p className="text-xs text-gray-400">{charCount} characters</p>
           <div className="flex items-center gap-3">
             {mutation.isError && (
               <span className="text-red-400 text-sm">
-                Failed to publish. Try again.
+                Failed to update. Try again.
               </span>
             )}
             <button
@@ -304,11 +361,11 @@ const Write = () => {
               {mutation.isPending ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Publishing...
+                  Saving...
                 </>
               ) : (
                 <>
-                  <span>🚀</span> Publish Post
+                  <span>💾</span> Save Changes
                 </>
               )}
             </button>
@@ -319,4 +376,4 @@ const Write = () => {
   );
 };
 
-export default Write;
+export default EditPost;

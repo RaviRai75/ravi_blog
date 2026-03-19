@@ -2,6 +2,23 @@ import ImageKit from "imagekit";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 
+export const getStats = async (req, res) => {
+  const [totalPosts, totalUsers, categories, visitsAgg] = await Promise.all([
+    Post.countDocuments(),
+    User.countDocuments(),
+    Post.distinct("category"),
+    Post.aggregate([
+      { $group: { _id: null, totalVisits: { $sum: "$visit" } } },
+    ]),
+  ]);
+  res.status(200).json({
+    totalPosts,
+    totalUsers,
+    totalCategories: categories.length,
+    totalReads: visitsAgg[0]?.totalVisits || 0,
+  });
+};
+
 export const getPosts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 2;
@@ -132,6 +149,28 @@ export const deletePost = async (req, res) => {
     return res.status(403).json("You can delete only your post");
   }
   res.status(200).json("Post has been deleted");
+};
+
+export const updatePost = async (req, res) => {
+  const clerkUserId = req.auth.userId;
+  if (!clerkUserId) return res.status(401).json("Not authenticated");
+
+  const user = await User.findOne({ clerkUserId });
+  if (!user) return res.status(404).json("User not found");
+
+  const role = req.auth.sessionClaims?.metadata?.role || "user";
+
+  const post = await Post.findById(req.params.id);
+  if (!post) return res.status(404).json("Post not found");
+
+  if (role !== "admin" && post.user.toString() !== user._id.toString()) {
+    return res.status(403).json("You can only edit your own posts");
+  }
+
+  const updated = await Post.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+  res.status(200).json(updated);
 };
 
 export const featurePost = async (req, res) => {

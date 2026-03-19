@@ -59,7 +59,7 @@ const Navbar = () => {
           <Link to="/posts?sort=popular" onClick={() => setOpen(false)}>
             Most Popular
           </Link>
-          <Link to="/" onClick={() => setOpen(false)}>
+          <Link to="/about" onClick={() => setOpen(false)}>
             About
           </Link>
           <SignedOut>
@@ -70,6 +70,13 @@ const Navbar = () => {
             </Link>
           </SignedOut>
           <SignedIn>
+            <Link
+              to="/my-posts"
+              onClick={() => setOpen(false)}
+              className="font-medium"
+            >
+              My Posts
+            </Link>
             <div onClick={() => setOpen(false)}>
               <UserButton />
             </div>
@@ -81,7 +88,7 @@ const Navbar = () => {
         <Link to="/">Home</Link>
         <Link to="/posts?sort=trending">Trending</Link>
         <Link to="/posts?sort=popular">Most Popular</Link>
-        <Link to="/">About</Link>
+        <Link to="/about">About</Link>
         <SignedOut>
           <Link to="/login">
             <button className="py-2 px-4 rounded-3xl bg-green-400 text-white cursor-pointer">
@@ -90,6 +97,12 @@ const Navbar = () => {
           </Link>
         </SignedOut>
         <SignedIn>
+          <Link
+            to="/my-posts"
+            className="text-sm font-medium hover:text-purple-600 transition-colors"
+          >
+            My Posts
+          </Link>
           <UserButton />
         </SignedIn>
       </div>

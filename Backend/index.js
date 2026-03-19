@@ -9,9 +9,20 @@ import { clerkMiddleware, requireAuth } from "@clerk/express";
 import cors from "cors";
 
 const app = express();
+const allowedOrigins = [
+  (process.env.CLIENT_URL || "").replace(/\/$/, ""),
+  "http://localhost:5173",
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: (process.env.CLIENT_URL || "").replace(/\/$/, ""),
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
