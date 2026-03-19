@@ -21,7 +21,7 @@ const Comment = ({ comment, postId }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
     },
     onSuccess: () => {
@@ -36,12 +36,17 @@ const Comment = ({ comment, postId }) => {
   return (
     <div className="p-4 bg-slate-50 rounded-xl mb-8">
       <div className="flex items-center gap-4">
-        {comment.user.img && (
+        {comment.user.img ? (
           <Image
             src={comment.user.img}
+            alt={comment.user.username}
             className="w-10 h-10 rounded-full object-cover"
             w="40"
           />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-green-300 flex items-center justify-center text-white font-bold">
+            {comment.user.username?.[0]?.toUpperCase()}
+          </div>
         )}
         <span className="font-medium">{comment.user.username}</span>
         <span className="text-sm text-gray-500">

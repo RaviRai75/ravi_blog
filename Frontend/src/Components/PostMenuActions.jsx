@@ -23,6 +23,7 @@ const PostMenuActions = ({ post }) => {
         },
       });
     },
+    enabled: !!user,
   });
 
   const isAdmin = user?.publicMetadata?.role === "admin" || false;
@@ -60,7 +61,7 @@ const PostMenuActions = ({ post }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
     },
     onSuccess: () => {
@@ -83,7 +84,7 @@ const PostMenuActions = ({ post }) => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
     },
     onSuccess: () => {
@@ -112,10 +113,10 @@ const PostMenuActions = ({ post }) => {
   return (
     <div className="">
       <h1 className="mt-8 mb-4 text-sm font-medium">Actions</h1>
-      {isPending ? (
-        "Loading..."
+      {!user ? null : isPending ? (
+        <p className="text-xs text-gray-400">Loading...</p>
       ) : error ? (
-        "Saved post fetching failed!"
+        <p className="text-xs text-red-400">Could not load saved posts</p>
       ) : (
         <div
           className="flex items-center gap-2 py-2 text-sm cursor-pointer"
@@ -137,8 +138,8 @@ const PostMenuActions = ({ post }) => {
                     ? "none"
                     : "black"
                   : isSaved
-                  ? "black"
-                  : "none"
+                    ? "black"
+                    : "none"
               }
             />
           </svg>
@@ -169,8 +170,8 @@ const PostMenuActions = ({ post }) => {
                     ? "none"
                     : "black"
                   : post.isFeatured
-                  ? "black"
-                  : "none"
+                    ? "black"
+                    : "none"
               }
             />
           </svg>
